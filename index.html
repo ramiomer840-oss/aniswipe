@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Rosins Restaurants Karte</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+margin:0;
+background:#f5f5f5;
+}
+
+header{
+background:#c1121f;
+color:white;
+text-align:center;
+padding:20px;
+font-size:28px;
+}
+
+#controls{
+display:flex;
+justify-content:center;
+gap:10px;
+padding:15px;
+background:white;
+flex-wrap:wrap;
+}
+
+input,select{
+padding:8px;
+font-size:15px;
+}
+
+#stats{
+display:flex;
+justify-content:center;
+gap:30px;
+padding:10px;
+background:#fafafa;
+}
+
+#map{
+height:500px;
+margin:10px;
+}
+
+table{
+width:95%;
+margin:auto;
+border-collapse:collapse;
+background:white;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #ddd;
+}
+
+th{
+background:#eee;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+Rosins Restaurants Karte
+</header>
+
+<div id="controls">
+
+<input id="search" placeholder="Restaurant oder Stadt">
+
+<select id="filter">
+<option value="alle">Alle</option>
+<option value="offen">Offen</option>
+<option value="geschlossen">Geschlossen</option>
+</select>
+
+</div>
+
+<div id="stats">
+<div>Restaurants: <span id="total"></span></div>
+<div>Offen: <span id="open"></span></div>
+<div>Geschlossen: <span id="closed"></span></div>
+</div>
+
+<div id="map"></div>
+
+<table>
+<thead>
+<tr>
+<th>Restaurant</th>
+<th>Stadt</th>
+<th>Status</th>
+<th>Folge</th>
+<th>Navigation</th>
+</tr>
+</thead>
+
+<tbody id="table"></tbody>
+</table>
+
+<script>
+
+const restaurants=[
+
+{name:"Wallmüllerstuben",city:"Treuchtlingen",status:"offen",episode:"Staffel 18",lat:48.96,lng:10.91},
+{name:"LeCoq",city:"Haan",status:"geschlossen",episode:"Staffel 17",lat:51.19,lng:7.00},
+{name:"Bürgerstube",city:"Lambrecht",status:"offen",episode:"Staffel 12",lat:49.37,lng:8.06},
+{name:"Waldcafé Forellenteich",city:"Braunlage",status:"offen",episode:"Staffel 19",lat:51.72,lng:10.61},
+{name:"Zum Stausee",city:"Niederhausen",status:"geschlossen",episode:"Staffel 10",lat:49.78,lng:7.67}
+
+];
+
+const map=L.map("map").setView([51,10],6);
+
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+
+let markers=[];
+
+function update(){
+
+let search=document.getElementById("search").value.toLowerCase();
+let filter=document.getElementById("filter").value;
+
+document.getElementById("table").innerHTML="";
+
+markers.forEach(m=>map.removeLayer(m));
+markers=[];
+
+let open=0;
+let closed=0;
+
+restaurants.filter(r=>{
+
+let s=r.name.toLowerCase().includes(search)||r.city.toLowerCase().includes(search);
+let f=filter==="alle"||r.status===filter;
+
+return s&&f;
+
+}).forEach(r=>{
+
+if(r.status==="offen")open++; else closed++;
+
+let color=r.status==="offen"?"green":"red";
+
+let marker=L.circleMarker([r.lat,r.lng],{
+radius:8,
+color:color,
+fillColor:color,
+fillOpacity:0.8
+}).addTo(map);
+
+marker.bindPopup(
+"<b>"+r.name+"</b><br>"+r.city+"<br>"+r.status+
+"<br><br><a target='_blank' href='https://www.google.com/maps/search/?api=1&query="+r.lat+","+r.lng+"'>Navigation</a>"
+);
+
+markers.push(marker);
+
+let row=document.createElement("tr");
+
+row.innerHTML=
+"<td>"+r.name+"</td>"+
+"<td>"+r.city+"</td>"+
+"<td>"+r.status+"</td>"+
+"<td>"+r.episode+"</td>"+
+"<td><a target='_blank' href='https://www.google.com/maps/search/?api=1&query="+r.lat+","+r.lng+"'>Route</a></td>";
+
+document.getElementById("table").appendChild(row);
+
+});
+
+document.getElementById("total").textContent=restaurants.length;
+document.getElementById("open").textContent=open;
+document.getElementById("closed").textContent=closed;
+
+}
+
+document.getElementById("search").addEventListener("input",update);
+document.getElementById("filter").addEventListener("change",update);
+
+update();
+
+</script>
+
+</body>
+</html>
